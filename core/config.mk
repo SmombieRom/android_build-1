@@ -210,6 +210,18 @@ else
 JAVA_TMPDIR_ARG :=
 endif
 
+# list of flags to turn specific warnings in to errors
+TARGET_ERROR_FLAGS := -Werror=return-type -Werror=non-virtual-dtor -Werror=address -Werror=sequence-point
+
+# TODO: do symbol compression
+TARGET_COMPRESS_MODULE_SYMBOLS := false
+
+# Default is to prelink modules.
+TARGET_PRELINK_MODULE := true
+
+# Default shell is mksh. Other possible value is ash.
+TARGET_SHELL := mksh
+
 # ###############################################################
 # Include sub-configuration files
 # ###############################################################
