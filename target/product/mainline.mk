@@ -33,6 +33,9 @@ endif
 ifeq ($(LINEAGE_BUILD),)
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.config.ringtone=Ring_Synth_04.ogg \
+endif
+
+PRODUCT_PROPERTY_OVERRIDES += \
     ro.com.android.dataroaming=true \
 
 PRODUCT_PACKAGES += \
