@@ -206,7 +206,7 @@ define generate-common-build-props
 	PRODUCT_DEVICE="$(TARGET_DEVICE)" \
 	PRODUCT_MANUFACTURER="$(PRODUCT_MANUFACTURER)" \
 	PRODUCT_MODEL="$(PRODUCT_MODEL)" \
-	PRODUCT_NAME="$(TARGET_DEVICE)" \
+	PRODUCT_NAME="$(TARGET_PRODUCT)" \
 	$(PRODUCT_BUILD_PROP_OVERRIDES) \
 	$(call generate-common-build-props-with-product-vars-set,$(1),$(2))
 endef
