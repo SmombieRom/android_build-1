@@ -206,7 +206,7 @@ define generate-common-build-props
 	PRODUCT_DEVICE="$(TARGET_DEVICE)" \
 	PRODUCT_MANUFACTURER="$(PRODUCT_MANUFACTURER)" \
 	PRODUCT_MODEL="$(PRODUCT_MODEL)" \
-	PRODUCT_NAME="crDroidAndroid-$(TARGET_DEVICE)" \
+	PRODUCT_NAME="SafeCallsOS-$(TARGET_DEVICE)" \
 	$(PRODUCT_BUILD_PROP_OVERRIDES) \
 	$(call generate-common-build-props-with-product-vars-set,$(1),$(2))
 endef
@@ -320,7 +320,7 @@ ifeq (,$(strip $(BUILD_FINGERPRINT)))
   else
     BF_BUILD_NUMBER := $(file <$(BUILD_NUMBER_FILE))
   endif
-  BUILD_FINGERPRINT := $(PRODUCT_BRAND)/crDroidAndroid-$(TARGET_DEVICE)/$(TARGET_DEVICE):$(PLATFORM_VERSION)/$(BUILD_ID)/$(BF_BUILD_NUMBER):$(TARGET_BUILD_VARIANT)/$(BUILD_VERSION_TAGS)
+  BUILD_FINGERPRINT := $(PRODUCT_BRAND)/SafeCallsOS-$(TARGET_DEVICE)/$(TARGET_DEVICE):$(PLATFORM_VERSION)/$(BUILD_ID)/$(BF_BUILD_NUMBER):$(TARGET_BUILD_VARIANT)/$(BUILD_VERSION_TAGS)
 endif
 # unset it for safety.
 BF_BUILD_NUMBER :=
@@ -382,7 +382,7 @@ endef
 # harness to distinguish builds. Only add _asan for a sanitized build
 # if it isn't already a part of the flavor (via a dedicated lunch
 # config for example).
-TARGET_BUILD_FLAVOR := crDroidAndroid-$(TARGET_DEVICE)-$(TARGET_BUILD_VARIANT)
+TARGET_BUILD_FLAVOR := SafeCallsOS-$(TARGET_DEVICE)-$(TARGET_BUILD_VARIANT)
 ifneq (, $(filter address, $(SANITIZE_TARGET)))
 ifeq (,$(findstring _asan,$(TARGET_BUILD_FLAVOR)))
 TARGET_BUILD_FLAVOR := $(TARGET_BUILD_FLAVOR)_asan
@@ -661,7 +661,7 @@ $(hide) echo '' >> $5
 
 endef
 
-name := crDroidAndroid-$(TARGET_DEVICE)
+name := SafeCallsOS-$(TARGET_DEVICE)
 ifeq ($(TARGET_BUILD_TYPE),debug)
   name := $(name)_debug
 endif
@@ -3604,7 +3604,7 @@ endif # build_otatools_package
 # This zip can be used to create an OTA package or filesystem image
 # as a post-build step.
 #
-name := crDroidAndroid-$(TARGET_DEVICE)
+name := SafeCallsOS-$(TARGET_DEVICE)
 ifeq ($(TARGET_BUILD_TYPE),debug)
   name := $(name)_debug
 endif
@@ -4178,7 +4178,7 @@ PATH=$(foreach p,$(INTERNAL_USERIMAGES_BINARY_PATHS),$(p):)$$PATH MKBOOTIMG=$(MK
    $(BUILT_TARGET_FILES_PACKAGE) $(1)
 endef
 
-name := crDroidAndroid-$(TARGET_DEVICE)
+name := SafeCallsOS-$(TARGET_DEVICE)
 ifeq ($(TARGET_BUILD_TYPE),debug)
   name := $(name)_debug
 endif
@@ -4213,7 +4213,7 @@ $(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) \
 otapackage: $(INTERNAL_OTA_PACKAGE_TARGET)
 
 ifeq ($(BOARD_BUILD_RETROFIT_DYNAMIC_PARTITIONS_OTA_PACKAGE),true)
-name := crDroidAndroid-$(TARGET_DEVICE)
+name := SafeCallsOS-$(TARGET_DEVICE)
 ifeq ($(TARGET_BUILD_TYPE),debug)
   name := $(name)_debug
 endif
@@ -4267,7 +4267,7 @@ $(APPCOMPAT_ZIP): $(SOONG_ZIP)
 # A zip of the symbols directory.  Keep the full paths to make it
 # more obvious where these files came from.
 #
-name := crDroidAndroid-$(TARGET_DEVICE)
+name := SafeCallsOS-$(TARGET_DEVICE)
 ifeq ($(TARGET_BUILD_TYPE),debug)
   name := $(name)_debug
 endif
@@ -4296,7 +4296,7 @@ $(SYMBOLS_ZIP): $(SOONG_ZIP)
 # -----------------------------------------------------------------
 # A zip of the coverage directory.
 #
-name := crDroidAndroid-$(TARGET_DEVICE)
+name := SafeCallsOS-$(TARGET_DEVICE)
 ifeq ($(TARGET_BUILD_TYPE),debug)
 name := $(name)_debug
 endif
@@ -4324,7 +4324,7 @@ $(COVERAGE_ZIP): $(SOONG_ZIP)
 # A zip of the Android Apps. Not keeping full path so that we don't
 # include product names when distributing
 #
-name := crDroidAndroid-$(TARGET_DEVICE)
+name := SafeCallsOS-$(TARGET_DEVICE)
 ifeq ($(TARGET_BUILD_TYPE),debug)
   name := $(name)_debug
 endif
@@ -4369,7 +4369,7 @@ endif # EMMA_INSTRUMENT=true
 # Only for apps_only build.
 #
 ifdef TARGET_BUILD_APPS
-PROGUARD_DICT_ZIP := $(PRODUCT_OUT)/crDroidAndroid-$(TARGET_DEVICE)-proguard-dict-$(FILE_NAME_TAG).zip
+PROGUARD_DICT_ZIP := $(PRODUCT_OUT)/SafeCallsOS-$(TARGET_DEVICE)-proguard-dict-$(FILE_NAME_TAG).zip
 # the dependency will be set up later in build/make/core/main.mk.
 $(PROGUARD_DICT_ZIP) :
 	@echo "Packaging Proguard obfuscation dictionary files."
@@ -4502,7 +4502,7 @@ endif # PRODUCT_BUILD_SUPER_PARTITION == "true"
 # -----------------------------------------------------------------
 # The update package
 
-name := crDroidAndroid-$(TARGET_DEVICE)
+name := SafeCallsOS-$(TARGET_DEVICE)
 ifeq ($(TARGET_BUILD_TYPE),debug)
   name := $(name)_debug
 endif
@@ -4626,7 +4626,7 @@ INTERNAL_EMULATOR_PACKAGE_FILES += \
         $(INSTALLED_SYSTEMIMAGE_TARGET) \
         $(INSTALLED_USERDATAIMAGE_TARGET)
 
-name := crDroidAndroid-$(TARGET_DEVICE)-emulator-$(FILE_NAME_TAG)
+name := SafeCallsOS-$(TARGET_DEVICE)-emulator-$(FILE_NAME_TAG)
 
 INTERNAL_EMULATOR_PACKAGE_TARGET := $(PRODUCT_OUT)/$(name).zip
 
@@ -4648,7 +4648,7 @@ endif
 # The SDK
 
 # The SDK includes host-specific components, so it belongs under HOST_OUT.
-sdk_dir := $(HOST_OUT)/sdk/crDroidAndroid-$(TARGET_DEVICE)
+sdk_dir := $(HOST_OUT)/sdk/SafeCallsOS-$(TARGET_DEVICE)
 
 # Build a name that looks like:
 #
