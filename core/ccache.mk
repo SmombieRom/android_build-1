@@ -36,12 +36,8 @@ ifneq ($(filter-out false,$(USE_CCACHE)),)
   # See http://petereisentraut.blogspot.com/2011/09/ccache-and-clang-part-2.html
   CCACHE_CPP2 := true
 
-  ifeq ($(USE_SYSTEM_CCACHE),)
-    CCACHE_HOST_TAG := $(HOST_PREBUILT_TAG)
-    ccache := prebuilts/tools-extras/$(CCACHE_HOST_TAG)/bin/ccache
-  else
-    ccache := $(shell which ccache)
-  endif
+  CCACHE_HOST_TAG := $(HOST_PREBUILT_TAG)
+  ccache := prebuilts/tools-extras/$(CCACHE_HOST_TAG)/bin/ccache
   # Check that the executable is here.
   ccache := $(strip $(wildcard $(ccache)))
   ifdef ccache
