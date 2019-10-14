@@ -86,6 +86,8 @@ PRODUCT_COPY_FILES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.carrier=unknown \
 
+ifeq ($(LINEAGE_BUILD),)
 PRODUCT_PROPERTY_OVERRIDES += \
-    ro.config.notification_sound=Popcorn.ogg \
-    ro.config.alarm_alert=Bright_morning.ogg
+    ro.config.notification_sound=OnTheHunt.ogg \
+    ro.config.alarm_alert=Alarm_Classic.ogg
+endif

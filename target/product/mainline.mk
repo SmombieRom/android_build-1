@@ -24,11 +24,18 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/handheld_product.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/telephony_vendor.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/telephony_product.mk)
 
-$(call inherit-product, frameworks/base/data/sounds/GoogleAudio.mk)
+ifeq ($(LINEAGE_BUILD),)
+$(call inherit-product, frameworks/base/data/sounds/AllAudio.mk)
+else
+$(call inherit-product, frameworks/base/data/sounds/AudioPackage14.mk)
+endif
 
+ifeq ($(LINEAGE_BUILD),)
 PRODUCT_PROPERTY_OVERRIDES += \
-    ro.config.ringtone=The_big_adventure.ogg \
+    ro.config.ringtone=Ring_Synth_04.ogg \
     ro.com.android.dataroaming=true \
+
+endif
 
 PRODUCT_PACKAGES += \
     PhotoTable \
