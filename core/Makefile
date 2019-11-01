@@ -3364,6 +3364,7 @@ define super-slot-suffix
 $(if $(filter true,$(AB_OTA_UPDATER)),$(if $(filter true,$(PRODUCT_RETROFIT_DYNAMIC_PARTITIONS)),,_a))
 endef
 
+
 droid_targets: check-all-partition-sizes
 
 .PHONY: check-all-partition-sizes check-all-partition-sizes-nodeps
@@ -3440,6 +3441,33 @@ endef
 check-all-partition-sizes check-all-partition-sizes-nodeps:
 	$(call check-all-partition-sizes-target)
 	$(call check-super-partition-size)
+
+check_all_partition_sizes_file := $(call intermediates-dir-for,PACKAGING,check-all-partition-sizes)/timestamp
+
+check-all-partition-sizes: $(check_all_partition_sizes_file)
+
+$(check_all_partition_sizes_file): \
+    $(CHECK_PARTITION_SIZES) \
+    $(call images-for-partitions,$(BOARD_SUPER_PARTITION_PARTITION_LIST))
+
+# $(1): misc_info.txt
+define check-all-partition-sizes-target
+  mkdir -p $(dir $(1))
+  rm -f $(1)
+  $(call dump-super-image-info, $(1))
+  $(foreach partition,$(BOARD_SUPER_PARTITION_PARTITION_LIST), \
+    echo "$(partition)_image="$(call images-for-partitions,$(partition)) >> $(1);)
+  $(CHECK_PARTITION_SIZES) -v $(1)
+endef
+
+$(check_all_partition_sizes_file):
+	$(call check-all-partition-sizes-target, \
+	  $(call intermediates-dir-for,PACKAGING,check-all-partition-sizes)/misc_info.txt)
+	touch $@
+
+check-all-partition-sizes-nodeps:
+	$(call check-all-partition-sizes-target, \
+	  $(call intermediates-dir-for,PACKAGING,check-all-partition-sizes-nodeps)/misc_info.txt)
 
 endif # PRODUCT_BUILD_SUPER_PARTITION
 
@@ -3727,6 +3755,14 @@ define dump-dynamic-partitions-info
     echo "build_non_sparse_super_partition=true" >> $(1))
   $(if $(filter true,$(BOARD_SUPER_IMAGE_IN_UPDATE_PACKAGE)), \
     echo "super_image_in_update_package=true" >> $(1))
+  $(if $(BOARD_SUPER_PARTITION_SIZE), \
+    echo "super_partition_size=$(BOARD_SUPER_PARTITION_SIZE)" >> $(1))
+  $(if $(BOARD_SUPER_PARTITION_ALIGNMENT), \
+    echo "super_partition_alignment=$(BOARD_SUPER_PARTITION_ALIGNMENT)" >> $(1))
+  $(if $(BOARD_SUPER_PARTITION_WARN_LIMIT), \
+    echo "super_partition_warn_limit=$(BOARD_SUPER_PARTITION_WARN_LIMIT)" >> $(1))
+  $(if $(BOARD_SUPER_PARTITION_ERROR_LIMIT), \
+    echo "super_partition_error_limit=$(BOARD_SUPER_PARTITION_ERROR_LIMIT)" >> $(1))
 endef
 
 # Depending on the various images guarantees that the underlying
@@ -4423,6 +4459,20 @@ $(PROGUARD_DICT_ZIP) :
 	      zip -qd $@ zipdummy; \
 	      rm $(dir $@)/zipdummy; \
 	    fi
+
+ifeq (true,$(PRODUCT_USE_DYNAMIC_PARTITIONS))
+
+# Dump variables used by build_super_image.py (for building super.img and super_empty.img).
+# $(1): output file
+define dump-super-image-info
+  $(call dump-dynamic-partitions-info,$(1))
+  $(if $(filter true,$(AB_OTA_UPDATER)), \
+    echo "ab_update=true" >> $(1))
+  $(if $(filter true,$(PRODUCT_VIRTUAL_AB_OTA)), \
+    echo "virtual_ab=true" >> $(1))
+  $(if $(filter true,$(PRODUCT_VIRTUAL_AB_OTA_RETROFIT)), \
+    echo "virtual_ab_retrofit=true" >> $(1))
+endef
 
 endif # TARGET_BUILD_APPS
 
