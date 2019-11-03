@@ -19,3 +19,30 @@
 PRODUCT_LOCALES := \
         en_US \
         ru_RU \
+        si_LK \
+        sk_SK \
+        sl_SI \
+        sq_AL \
+        sr_Latn_RS \
+        sr_RS \
+        sv_SE \
+        sw_TZ \
+        ta_IN \
+        te_IN \
+        th_TH \
+        tl_PH \
+        tr_TR \
+        uk_UA \
+        ur_PK \
+        uz_UZ \
+        vi_VN \
+        zh_CN \
+        zh_HK \
+        zh_TW \
+        zu_ZA \
+
+# LineageOS specific languages
+PRODUCT_LOCALES += \
+        ast_ES \
+        gd_GB \
+        cy_GB

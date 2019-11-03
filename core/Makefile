@@ -208,6 +208,7 @@ define generate-common-build-props
 	PRODUCT_MODEL="$(PRODUCT_MODEL)" \
 	PRODUCT_NAME="$(TARGET_DEVICE)" \
 	$(PRODUCT_BUILD_PROP_OVERRIDES) \
+
 	$(call generate-common-build-props-with-product-vars-set,$(1),$(2))
 endef
 
@@ -320,7 +321,7 @@ ifeq (,$(strip $(BUILD_FINGERPRINT)))
   else
     BF_BUILD_NUMBER := $(file <$(BUILD_NUMBER_FILE))
   endif
-  BUILD_FINGERPRINT := $(PRODUCT_BRAND)/SafeCallsOS-$(TARGET_DEVICE)/$(TARGET_DEVICE):$(PLATFORM_VERSION)/$(BUILD_ID)/$(BF_BUILD_NUMBER):$(TARGET_BUILD_VARIANT)/$(BUILD_VERSION_TAGS)
+  BUILD_FINGERPRINT := $(PRODUCT_BRAND)/crDroidAndroid-$(TARGET_DEVICE)/$(TARGET_DEVICE):$(PLATFORM_VERSION)/$(BUILD_ID)/$(BF_BUILD_NUMBER):$(TARGET_BUILD_VARIANT)/$(BUILD_VERSION_TAGS)
 endif
 # unset it for safety.
 BF_BUILD_NUMBER :=
@@ -382,7 +383,7 @@ endef
 # harness to distinguish builds. Only add _asan for a sanitized build
 # if it isn't already a part of the flavor (via a dedicated lunch
 # config for example).
-TARGET_BUILD_FLAVOR := SafeCallsOS-$(TARGET_DEVICE)-$(TARGET_BUILD_VARIANT)
+TARGET_BUILD_FLAVOR := crDroidAndroid-$(TARGET_DEVICE)-$(TARGET_BUILD_VARIANT)
 ifneq (, $(filter address, $(SANITIZE_TARGET)))
 ifeq (,$(findstring _asan,$(TARGET_BUILD_FLAVOR)))
 TARGET_BUILD_FLAVOR := $(TARGET_BUILD_FLAVOR)_asan
@@ -422,6 +423,7 @@ endif
 	        BUILD_ID="$(BUILD_ID)" \
 	        BUILD_DISPLAY_ID="$(BUILD_DISPLAY_ID)" \
 	        DATE="$(DATE_FROM_FILE)" \
+	        BUILD_FINGERPRINT="$(BUILD_FINGERPRINT_FROM_FILE)" \
 	        BUILD_USERNAME="$(BUILD_USERNAME)" \
 	        BUILD_HOSTNAME="$(BUILD_HOSTNAME)" \
 	        BUILD_NUMBER="$(BUILD_NUMBER_FROM_FILE)" \
@@ -661,7 +663,7 @@ $(hide) echo '' >> $5
 
 endef
 
-name := SafeCallsOS-$(TARGET_DEVICE)
+name := crDroidAndroid-$(TARGET_DEVICE)
 ifeq ($(TARGET_BUILD_TYPE),debug)
   name := $(name)_debug
 endif
@@ -1568,6 +1570,9 @@ recovery_ramdisk := $(PRODUCT_OUT)/ramdisk-recovery.img
 recovery_uncompressed_ramdisk := $(PRODUCT_OUT)/ramdisk-recovery.cpio
 recovery_resources_common := $(call include-path-for, recovery)/res
 
+ifneq (,$(TARGET_RECOVERY_DENSITY))
+recovery_density := $(filter %dpi,$(TARGET_RECOVERY_DENSITY))
+else
 # Set recovery_density to a density bucket based on TARGET_SCREEN_DENSITY, PRODUCT_AAPT_PREF_CONFIG,
 # or mdpi, in order of preference. We support both specific buckets (e.g. xdpi) and numbers,
 # which get remapped to a bucket.
@@ -1582,6 +1587,7 @@ recovery_density := $(strip \
        $(if $(filter $(shell echo $$(($(recovery_density_value) >= 400))),1),xxhdpi),\
        $(if $(filter $(shell echo $$(($(recovery_density_value) >= 280))),1),xhdpi),\
        $(if $(filter $(shell echo $$(($(recovery_density_value) >= 200))),1),hdpi,mdpi)))
+endif
 endif
 
 ifneq (,$(wildcard $(recovery_resources_common)-$(recovery_density)))
@@ -1696,6 +1702,16 @@ RECOVERY_WIPE_DATA_CONFIRMATION_TEXT_FILE :=
 RECOVERY_WIPE_DATA_MENU_HEADER_TEXT_FILE :=
 endif # TARGET_RECOVERY_UI_SCREEN_WIDTH
 
+ifneq ($(TARGET_RECOVERY_DEVICE_DIRS),)
+recovery_root_private := $(strip \
+  $(foreach d,$(TARGET_RECOVERY_DEVICE_DIRS), $(wildcard $(d)/recovery/root)))
+else
+recovery_root_private := $(strip $(wildcard $(TARGET_DEVICE_DIR)/recovery/root))
+endif
+ifneq ($(recovery_root_private),)
+recovery_root_deps := $(shell find $(recovery_root_private) -type f)
+endif
+
 ifndef TARGET_PRIVATE_RES_DIRS
 TARGET_PRIVATE_RES_DIRS := $(wildcard $(TARGET_DEVICE_DIR)/recovery/res)
 endif
@@ -1746,6 +1762,7 @@ INSTALLED_RECOVERY_BUILD_PROP_TARGET := $(TARGET_RECOVERY_ROOT_OUT)/prop.default
 
 $(INSTALLED_RECOVERY_BUILD_PROP_TARGET): PRIVATE_RECOVERY_UI_PROPERTIES := \
     TARGET_RECOVERY_UI_ANIMATION_FPS:animation_fps \
+    TARGET_RECOVERY_UI_BLANK_UNBLANK_ON_INIT:blank_unblank_on_init \
     TARGET_RECOVERY_UI_MARGIN_HEIGHT:margin_height \
     TARGET_RECOVERY_UI_MARGIN_WIDTH:margin_width \
     TARGET_RECOVERY_UI_MENU_UNUSABLE_ROWS:menu_unusable_rows \
@@ -1864,10 +1881,12 @@ define build-recoveryramdisk
   $(hide) $(foreach recovery_text_file,$(generated_recovery_text_files), \
     cp -rf $(recovery_text_file) $(TARGET_RECOVERY_ROOT_OUT)/res/images/ &&) true
   $(hide) cp -f $(recovery_font) $(TARGET_RECOVERY_ROOT_OUT)/res/images/font.png
+  $(hide) $(foreach item,$(recovery_root_private), \
+    cp -rf $(item) $(TARGET_RECOVERY_OUT)/;)
   $(hide) $(foreach item,$(TARGET_PRIVATE_RES_DIRS), \
-    cp -rf $(item) $(TARGET_RECOVERY_ROOT_OUT)/$(newline))
+    cp -rf $(item) $(TARGET_RECOVERY_ROOT_OUT)/$(newline);)
   $(hide) $(foreach item,$(recovery_fstab), \
-    cp -f $(item) $(TARGET_RECOVERY_ROOT_OUT)/system/etc/recovery.fstab)
+    cp -f $(item) $(TARGET_RECOVERY_ROOT_OUT)/system/etc/recovery.fstab;)
   $(if $(strip $(recovery_wipe)), \
     $(hide) cp -f $(recovery_wipe) $(TARGET_RECOVERY_ROOT_OUT)/system/etc/recovery.wipe)
   $(hide) mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/system/etc/security
@@ -1879,6 +1898,8 @@ endef
 RECOVERYIMAGE_ID_FILE := $(PRODUCT_OUT)/recovery.id
 # $(1): output file
 define build-recoveryimage-target
+  $(hide) ./vendor/lineage/build/tools/changelog.sh
+  $(hide) mv $(PRODUCT_OUT)/Changelog.txt $(PRODUCT_OUT)/changelog_$(TARGET_DEVICE).txt
   $(if $(filter true,$(PRODUCT_SUPPORTS_VBOOT)), \
     $(hide) $(MKBOOTIMG) $(INTERNAL_RECOVERYIMAGE_ARGS) $(INTERNAL_MKBOOTIMG_VERSION_ARGS) $(BOARD_MKBOOTIMG_ARGS) --output $(1).unsigned, \
     $(hide) $(MKBOOTIMG) $(INTERNAL_RECOVERYIMAGE_ARGS) $(INTERNAL_MKBOOTIMG_VERSION_ARGS) $(BOARD_MKBOOTIMG_ARGS) --output $(1) --id > $(RECOVERYIMAGE_ID_FILE))
@@ -1930,7 +1951,7 @@ $(INSTALLED_BOOTIMAGE_TARGET): $(MKBOOTFS) $(MKBOOTIMG) $(MINIGZIP) \
 	    $(recovery_initrc) $(recovery_sepolicy) $(recovery_kernel) \
 	    $(INSTALLED_2NDBOOTLOADER_TARGET) \
 	    $(INSTALLED_RECOVERY_BUILD_PROP_TARGET) \
-	    $(recovery_resource_deps) \
+	    $(recovery_resource_deps) $(recovery_root_deps) \
 	    $(recovery_fstab) \
 	    $(RECOVERY_INSTALL_OTA_KEYS) \
 	    $(BOARD_RECOVERY_KERNEL_MODULES) \
@@ -1963,7 +1984,7 @@ $(recovery_uncompressed_ramdisk): $(MKBOOTFS) $(ADBD) \
 	    $(recovery_initrc) $(recovery_sepolicy) \
 	    $(INSTALLED_2NDBOOTLOADER_TARGET) \
 	    $(INSTALLED_RECOVERY_BUILD_PROP_TARGET) \
-	    $(recovery_resource_deps) \
+	    $(recovery_resource_deps) $(recovery_root_deps) \
 	    $(recovery_fstab) \
 	    $(RECOVERY_INSTALL_OTA_KEYS) \
 	    $(BOARD_RECOVERY_KERNEL_MODULES) \
@@ -2262,6 +2283,8 @@ endif
 
 # $(1): output file
 define build-systemimage-target
+  $(hide) ./vendor/lineage/build/tools/changelog.sh
+  $(hide) mv $(PRODUCT_OUT)/Changelog.txt $(PRODUCT_OUT)/changelog_$(TARGET_DEVICE).txt
   @echo "Target system fs image: $(1)"
   $(call create-system-vendor-symlink)
   $(call create-system-product-symlink)
@@ -3601,7 +3624,7 @@ endif # build_otatools_package
 # This zip can be used to create an OTA package or filesystem image
 # as a post-build step.
 #
-name := SafeCallsOS-$(TARGET_DEVICE)
+name := crDroidAndroid-$(TARGET_DEVICE)
 ifeq ($(TARGET_BUILD_TYPE),debug)
   name := $(name)_debug
 endif
@@ -4180,7 +4203,7 @@ PATH=$(foreach p,$(INTERNAL_USERIMAGES_BINARY_PATHS),$(p):)$$PATH MKBOOTIMG=$(MK
    $(BUILT_TARGET_FILES_PACKAGE) $(1)
 endef
 
-name := SafeCallsOS-$(TARGET_DEVICE)
+name := crDroidAndroid-$(TARGET_DEVICE)
 ifeq ($(TARGET_BUILD_TYPE),debug)
   name := $(name)_debug
 endif
@@ -4225,7 +4248,8 @@ $(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) \
 otapackage: $(INTERNAL_OTA_PACKAGE_TARGET)
 
 ifeq ($(BOARD_BUILD_RETROFIT_DYNAMIC_PARTITIONS_OTA_PACKAGE),true)
-name := SafeCallsOS-$(TARGET_DEVICE)
+
+name := crDroidAndroid-$(TARGET_DEVICE)
 ifeq ($(TARGET_BUILD_TYPE),debug)
   name := $(name)_debug
 endif
@@ -4279,7 +4303,8 @@ $(APPCOMPAT_ZIP): $(SOONG_ZIP)
 # A zip of the symbols directory.  Keep the full paths to make it
 # more obvious where these files came from.
 #
-name := SafeCallsOS-$(TARGET_DEVICE)
+
+name := crDroidAndroid-$(TARGET_DEVICE)
 ifeq ($(TARGET_BUILD_TYPE),debug)
   name := $(name)_debug
 endif
@@ -4308,7 +4333,8 @@ $(SYMBOLS_ZIP): $(SOONG_ZIP)
 # -----------------------------------------------------------------
 # A zip of the coverage directory.
 #
-name := SafeCallsOS-$(TARGET_DEVICE)
+
+name := crDroidAndroid-$(TARGET_DEVICE)
 ifeq ($(TARGET_BUILD_TYPE),debug)
 name := $(name)_debug
 endif
@@ -4336,7 +4362,8 @@ $(COVERAGE_ZIP): $(SOONG_ZIP)
 # A zip of the Android Apps. Not keeping full path so that we don't
 # include product names when distributing
 #
-name := SafeCallsOS-$(TARGET_DEVICE)
+
+name := crDroidAndroid-$(TARGET_DEVICE)
 ifeq ($(TARGET_BUILD_TYPE),debug)
   name := $(name)_debug
 endif
@@ -4381,7 +4408,8 @@ endif # EMMA_INSTRUMENT=true
 # Only for apps_only build.
 #
 ifdef TARGET_BUILD_APPS
-PROGUARD_DICT_ZIP := $(PRODUCT_OUT)/SafeCallsOS-$(TARGET_DEVICE)-proguard-dict-$(FILE_NAME_TAG).zip
+
+PROGUARD_DICT_ZIP := $(PRODUCT_OUT)/crDroidAndroid-$(TARGET_DEVICE)-proguard-dict-$(FILE_NAME_TAG).zip
 # the dependency will be set up later in build/make/core/main.mk.
 $(PROGUARD_DICT_ZIP) :
 	@echo "Packaging Proguard obfuscation dictionary files."
@@ -4514,7 +4542,7 @@ endif # PRODUCT_BUILD_SUPER_PARTITION == "true"
 # -----------------------------------------------------------------
 # The update package
 
-name := SafeCallsOS-$(TARGET_DEVICE)
+name := crDroidAndroid-$(TARGET_DEVICE)
 ifeq ($(TARGET_BUILD_TYPE),debug)
   name := $(name)_debug
 endif
@@ -4638,7 +4666,7 @@ INTERNAL_EMULATOR_PACKAGE_FILES += \
         $(INSTALLED_SYSTEMIMAGE_TARGET) \
         $(INSTALLED_USERDATAIMAGE_TARGET)
 
-name := SafeCallsOS-$(TARGET_DEVICE)-emulator-$(FILE_NAME_TAG)
+name := crDroidAndroid-$(TARGET_DEVICE)-emulator-$(FILE_NAME_TAG)
 
 INTERNAL_EMULATOR_PACKAGE_TARGET := $(PRODUCT_OUT)/$(name).zip
 
@@ -4660,7 +4688,8 @@ endif
 # The SDK
 
 # The SDK includes host-specific components, so it belongs under HOST_OUT.
-sdk_dir := $(HOST_OUT)/sdk/SafeCallsOS-$(TARGET_DEVICE)
+
+sdk_dir := $(HOST_OUT)/sdk/crDroidAndroid-$(TARGET_DEVICE)
 
 # Build a name that looks like:
 #
