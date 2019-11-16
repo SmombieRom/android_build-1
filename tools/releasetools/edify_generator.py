@@ -146,10 +146,13 @@ class EdifyGenerator(object):
     self.script.append(self.WordWrap(cmd))
 
   def AssertSomeBootloader(self, *bootloaders):
-    """Asert that the bootloader version is one of *bootloaders."""
+    """Assert that the bootloader version is one of *bootloaders."""
     cmd = ("assert(" +
            " ||\0".join(['getprop("ro.bootloader") == "%s"' % (b,)
                          for b in bootloaders]) +
+           ' || abort("This package supports bootloader(s): ' +
+           ", ".join(["%s" % (b,) for b in bootloaders]) +
+           '; this device has bootloader " + getprop("ro.bootloader") + ".");' +
            ");")
     self.script.append(self.WordWrap(cmd))
 	
@@ -162,6 +165,12 @@ class EdifyGenerator(object):
   def RunBackup(self, command, system_path):
     self.script.append(('run_program("/tmp/install/bin/backuptool.sh", "%s", "%s");' % (
         command, system_path)))
+
+  def MountSys(self, command, mount_point):
+    fstab = self.fstab
+    if fstab:
+      p = fstab[mount_point]
+    self.script.append('run_program("/tmp/install/bin/system-mount.sh", "%s", "%s");' % (command, p.device))
 
   def ShowProgress(self, frac, dur):
     """Update the progress bar, advancing it over 'frac' over the next
