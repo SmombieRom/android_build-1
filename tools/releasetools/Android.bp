@@ -1,0 +1,49 @@
+
+python_binary_host {
+    name: "build_super_image",
+    defaults: [
+        "releasetools_binary_defaults",
+        "releasetools_build_super_image_defaults",
+    ],
+}
+python_binary_host {
+    name: "check_partition_sizes",
+    srcs: [
+        "check_partition_sizes.py",
+    ],
+    libs: [
+        "releasetools_common",
+    ],
+    defaults: [
+        "releasetools_binary_defaults",
+    ],
+}
+python_binary_host {
+    name: "check_ota_package_signature",
+    defaults: ["releasetools_binary_defaults"],
+    srcs: [
+        "check_ota_package_signature.py",
+    ],
+    libs: [
+        "releasetools_common",
+    ],
+    required: [
+        "delta_generator",
+}
+//
+// Tests.
+//
+python_defaults {
+    name: "releasetools_test_defaults",
+    srcs: [
+        "check_ota_package_signature.py",
+        "check_partition_sizes.py",
+        "check_target_files_signatures.py",
+        "make_recovery_patch.py",
+        "merge_target_files.py",
+        "ota_package_parser.py",
+        "sign_apex.py",
+        "sign_target_files_apks.py",
+        "validate_target_files.py",
+        "test_*.py",
+    ],
